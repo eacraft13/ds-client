@@ -91,38 +91,15 @@ module.exports = function (credentials) {
                 });
             })
             .then(function (resales) {
-                var ids = _.map(resales, function (resale) {
+                return _.map(resales, function (resale) {
                     return resale.ebay.finding.itemId[0];
                 });
-
-                return ebayApi
-                    .shopping
-                    .getMultipleItems(ids)
-                    .then(function (items) {
-                        return _.map(resales, function (resale) {
-                            resale.ebay.shopping = _.find(items, { ItemID: resale.ebay.finding.itemId[0] });
-                        });
-                    });
             })
-            .then(function (resales) {
-                return _.uniqBy(resales, 'ebay.shopping.ItemID');
+            .then(function (ids) {
+                return _.uniq(ids);
             })
-            .then(function (resales) {
-                return _(resales)
-                    .map(function (resale) {
-                        var variations = self.explodeVariations(resale.ebay.shopping);
-
-                        return _.map(variations, function (variation) {
-                            var clone = _.cloneDeep(resale);
-
-                            clone.ebay.shopping = variation;
-                            clone.id = self.generateId(variation);
-
-                            return clone;
-                        });
-                    })
-                    .flatten()
-                    .valueOf();
+            .then(function (ids) {
+                return self.getItems(ids);
             });
     };
 
@@ -159,7 +136,7 @@ module.exports = function (credentials) {
                         return _.map(variations, function (variation) {
                             var clone = _.cloneDeep(item);
 
-                            clone.ebay.shopping = variation;
+                            clone.shopping = variation;
                             clone.id = self.generateId(variation);
 
                             return clone;
@@ -168,14 +145,18 @@ module.exports = function (credentials) {
                     .flatten()
                     .valueOf();
             })
-            .then(function (leads) {
-                return _.map(leads, function (lead) {
-                    var finding = lead.finding;
-                    var shopping = lead.shopping,
-                        variation = shopping.Variations ? shopping.Variations.Variation : {};
+            .then(function (items) {
+                return _.map(items, function (item) {
+                    var finding = item.finding;
+                    var shopping = item.shopping,
+                        variation = _.defaults({}, {
+                            SellingStatus: null,
+                            StartPrice: null,
+                            VariationSpecifics: { NameValueList: [] }
+                        }, shopping.Variations ? shopping.Variations.Variation : {});
 
                     return {
-                        id: self.generateId(shopping),
+                        id: item.id,
                         itemId: shopping.ItemID,
                         image: {
                             gallery: shopping.GalleryURL,
@@ -202,17 +183,15 @@ module.exports = function (credentials) {
                             endTime: moment(shopping.EndTime).valueOf()
                         },
                         price: {
-                            price: variation ?
-                                variation.StartPrice :
-                                shopping.CurrentPrice,
-                            tax: 0.00,
-                            shippingCost: shopping.ShippingCostSummary.ShippingServiceCost,
-                            quantity: variation ?
-                                +variation.SellingStatus.Quantity - +variation.SellingStatus.QuantitySold :
-                                +shopping.Quantity - +shopping.QuantitySold
+                            price: variation.StartPrice ? variation.StartPrice.Value : shopping.CurrentPrice.Value,
+                            tax: null,
+                            shippingCost: shopping.ShippingCostSummary.ShippingServiceCost.Value,
+                            quantity: variation.SellingStatus ?
+                                variation.SellingStatus.Quantity - variation.SellingStatus.QuantitySold :
+                                shopping.Quantity - shopping.QuantitySold
                         },
                         shipping: {
-                            cost: shopping.ShippingCostSummary.ShippingServiceCost,
+                            cost: shopping.ShippingCostSummary.ShippingServiceCost.Value,
                             handling: shopping.HandlingTime,
                             minDays: null,
                             maxDays: null,
