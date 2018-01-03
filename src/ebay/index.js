@@ -84,6 +84,7 @@ module.exports = function (credentials) {
         var self = this;
 
         return ebayApi
+            .finding
             .findItemsIneBayStores({ storeName: credentials.storeName })
             .then(function (items) {
                 return _.map(items[0].item, function (item) {
@@ -152,6 +153,7 @@ module.exports = function (credentials) {
                         variation = _.defaults({}, {
                             SellingStatus: null,
                             StartPrice: null,
+                            ItemSpecifics: { NameValueList: [] },
                             VariationSpecifics: { NameValueList: [] }
                         }, shopping.Variations ? shopping.Variations.Variation : {});
 
@@ -166,7 +168,7 @@ module.exports = function (credentials) {
                             title: shopping.Title,
                             categoryId: shopping.PrimaryCategoryID,
                             description: shopping.Description,
-                            item: _.map(shopping.ItemSpecifics.NameValueList, function (list) {
+                            item: _.map(variation.ItemSpecifics.NameValueList, function (list) {
                                 return {
                                     name: list.Name,
                                     value: list.Value
