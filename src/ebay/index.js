@@ -159,7 +159,7 @@ module.exports = function (credentials) {
                             var clone = _.cloneDeep(item);
 
                             clone.ebay.shopping = variation;
-                            clone.id = ebay.shopping.generateId(variation);
+                            clone.id = self.generateId(variation);
 
                             return clone;
                         });

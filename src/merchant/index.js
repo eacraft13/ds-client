@@ -4,6 +4,20 @@ module.exports = function (credentials) {
     var merchant = {};
     var walmart = require('walmart')(credentials.key);
 
+    /**
+     * Returns a unique id based on merchant
+     * @param {string} merchantName
+     * @param {string} merchantId
+     */
+    merchant.generateId = function (merchantName, merchantId) {
+        return merchantName.toLowerCase() + '-' + merchantId;
+    };
+
+    /**
+     * Returns item based on merchant
+     * @param {string} merchantName
+     * @param {string} merchantId
+     */
     merchant.getItem = function (merchantName, merchantId) {
         if (merchantName.toLowerCase() === 'walmart')
             return walmart
