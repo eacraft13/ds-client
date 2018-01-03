@@ -1,7 +1,8 @@
 'use strict';
 
-var _       = require('lodash');
-var hash    = require('object-hash');
+var _      = require('lodash');
+var hash   = require('object-hash');
+var moment = require('moment');
 
 module.exports = function (credentials) {
     var ebay = {};
@@ -166,6 +167,72 @@ module.exports = function (credentials) {
                     })
                     .flatten()
                     .valueOf();
+            })
+            .then(function (leads) {
+                return _.map(leads, function (lead) {
+                    var finding = lead.finding;
+                    var shopping = lead.shopping,
+                        variation = shopping.Variations ? shopping.Variations.Variation : {};
+
+                    return {
+                        id: self.generateId(shopping),
+                        itemId: shopping.ItemID,
+                        image: {
+                            gallery: shopping.GalleryURL,
+                            images: shopping.PictureURL,
+                        },
+                        specifics: {
+                            title: shopping.Title,
+                            categoryId: shopping.PrimaryCategoryID,
+                            description: shopping.Description,
+                            item: _.map(shopping.ItemSpecifics.NameValueList, function (list) {
+                                return {
+                                    name: list.Name,
+                                    value: list.Value
+                                };
+                            }),
+                            variation: _.map(variation.VariationSpecifics.NameValueList, function (list) {
+                                return {
+                                    name: list.Name,
+                                    value: list.Value
+                                };
+                            }),
+                            status: shopping.ListingStatus,
+                            startTime: moment(shopping.StartTime).valueOf(),
+                            endTime: moment(shopping.EndTime).valueOf()
+                        },
+                        price: {
+                            price: variation ?
+                                variation.StartPrice :
+                                shopping.CurrentPrice,
+                            tax: 0.00,
+                            shippingCost: shopping.ShippingCostSummary.ShippingServiceCost,
+                            quantity: variation ?
+                                +variation.SellingStatus.Quantity - +variation.SellingStatus.QuantitySold :
+                                +shopping.Quantity - +shopping.QuantitySold
+                        },
+                        shipping: {
+                            cost: shopping.ShippingCostSummary.ShippingServiceCost,
+                            handling: shopping.HandlingTime,
+                            minDays: null,
+                            maxDays: null,
+                            isGlobal: shopping.GlobalShipping
+                        },
+                        profit: {
+                            snipeId: null,
+                            supplyId: null
+                        },
+                        hotness: {
+                            visits: shopping.HitCount,
+                            watchers: null,
+                            sold: shopping.QuantitySold
+                        },
+                        '@ebay': {
+                            '@finding': JSON.stringify(finding),
+                            '@shopping': JSON.stringify(shopping)
+                        }
+                    };
+                });
             });
     };
 
