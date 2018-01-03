@@ -1,6 +1,5 @@
 'use strict';
 
-
 module.exports = function (credentials) {
     var merchant = {};
     var walmart = require('walmart')(credentials.walmart.key);

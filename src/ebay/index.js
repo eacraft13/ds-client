@@ -1,11 +1,11 @@
 'use strict';
 
 var _       = require('lodash');
-var ebayApi = require('ebay-dev-api');
 var hash    = require('object-hash');
 
 module.exports = function (credentials) {
     var ebay = {};
+    var ebayApi = require('ebay-dev-api')(credentials.ebay);
 
     /**
      * Create variation specific unique id
