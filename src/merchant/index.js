@@ -2,7 +2,7 @@
 
 module.exports = function (credentials) {
     var merchant = {};
-    var walmart = require('walmart')(credentials.walmart.key);
+    var walmart = require('walmart')(credentials.key);
 
     merchant.getItem = function (merchantName, merchantId) {
         if (merchantName.toLowerCase() === 'walmart')
