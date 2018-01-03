@@ -9,6 +9,7 @@
   "author": "eacraft13",
   "license": "ISC",
   "dependencies": {
+    "amazon-product-api": "^0.4.4",
     "lodash": "^4.17.4",
     "moment": "^2.20.1",
     "object-hash": "^1.2.0",
